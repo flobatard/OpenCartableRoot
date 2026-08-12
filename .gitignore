@@ -1,0 +1,10 @@
+# Sous-projets versionnés dans leurs propres dépôts git
+/OpenCartableBack/
+/OpenCartableFront/
+
+# Divers OS / éditeurs
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
