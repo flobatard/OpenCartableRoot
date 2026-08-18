@@ -121,10 +121,11 @@ Pour « agencer texte de cours + documents + images », le modèle gagnant est u
 - Les blocs « média » ne contiennent qu'une **référence** vers une ligne `resource` (elle-même pointant vers S3). Le binaire et l'éditorial restent découplés.
 - Enjeu UX côté Angular : éditeur d'ordre des blocs (drag & drop) et insertion de ressources existantes ou nouvelles.
 
-### 5.4 Recherche
-- MVP : **Full-Text Search Postgres** (`tsvector` + index GIN) sur titres de cours, texte des blocs, noms et tags de ressources. Configuration `french` pour le *stemming*.
-- Facettes : matière, niveau, type de ressource (filtres SQL classiques).
-- Évolution : recherche **sémantique** via pgvector (cf. 5.7), combinable avec la FTS (recherche hybride).
+### 5.4 Recherche (J3 — livré)
+- **FTS Postgres** en config **`french_unaccent`** (extension contrib `unaccent` + copie de `french` : stemming ET insensibilité aux accents). Vecteurs `tsvector` **stockés** sur `courses` (titre poids A, description B) et `blocks` (titre B, contenu C — champ par champ, **jamais les corrigés d'exercice**), maintenus par **triggers PostgreSQL**, index **GIN** ; requêtes `websearch_to_tsquery`.
+- **Recherche publique sans compte** (`/api/v1/public/search/courses|teachers` + page front `/:lang/search`) : seuls les cours **publics** remontent ; un prof n'apparaît que s'il a coché l'opt-in `cherchable` de son profil, renseigné un `nom_public` et publié au moins un cours (vecteur prof calculé à la volée : nom + matières enseignées).
+- Facettes : matière (sous-arbre entier via le `code`), niveau (nœud + enfants) — arbres de taxonomie exposés en lecture publique pour les sélecteurs. Pagination `{items, total, limit, offset}`. Recherche sans texte libre = catalogue trié par récence.
+- Évolution : recherche **sémantique** (ChromaDB si actée, cf. 5.7), combinable avec la FTS (recherche hybride).
 
 ### 5.5 Modules interactifs HTML/JS
 Le point le plus sensible niveau sécurité : tu vas servir du **code arbitraire** (le tien, mais quand même).
@@ -179,6 +180,7 @@ erDiagram
       int position
       string type
       jsonb content
+      tsvector search_vector
     }
     RESOURCE {
       uuid id
@@ -210,7 +212,7 @@ erDiagram
 | **J0 — Socle** | Repo, Docker Compose, FastAPI + Postgres + Alembic, validation JWT Zitadel, squelette Angular + login OIDC | Une route protégée qui répond, un login prof qui marche |
 | **J1 — Contenu** | Matières, cours, upload S3 (presigned), éditeur de blocs basique | Le prof crée et remplit un cours |
 | **J2 — Partage** | Liens publics, vue lecture seule élève, présignature des ressources | Un cours consultable par lien |
-| **J3 — Recherche** | FTS Postgres + facettes | Retrouver n'importe quel support |
+| **J3 — Recherche** *(livré)* | FTS Postgres `french_unaccent` (cours publics + profs opt-in, triggers + GIN), page publique `/search` à facettes et pagination | Retrouver n'importe quel support |
 | **J4 — Interactif** | Upload + sandbox des modules HTML/JS | Intégrer un quiz dans un cours |
 | **J5 — IA** | pgvector, extraction texte, recherche sémantique / RAG | Première brique IA |
 
