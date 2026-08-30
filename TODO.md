@@ -14,7 +14,7 @@ il faudra mettre en place une stratégie de purge.
 Contraintes et pistes :
 
 - **Ne jamais toucher au jour UTC courant** : le quota quotidien
-  (`_consommer_quota_defaut` / `rembourser_quota_defaut`,
+  (`_consume_default_quota` / `refund_default_quota`,
   `OpenCartableBack/app/ai_credentials/service.py`) et le compteur
   « utilisés / autorisés » de l'écran Paramètres → Assistant IA lisent cette ligne.
 - Choisir une **rétention** (ex. 90 jours) : l'historique au-delà ne sert qu'à
@@ -22,7 +22,7 @@ Contraintes et pistes :
   agréger avant de supprimer.
 - Véhicule possible : job périodique hors API (cron système sur le Pi —
   `scripts/` du back est maintenu à la main par l'utilisateur) ; un simple
-  `DELETE FROM ai_daily_usage WHERE jour < now() - interval 'N days'` suffit,
+  `DELETE FROM ai_daily_usage WHERE day < now() - interval 'N days'` suffit,
   aucune dépendance nouvelle.
 
 ## Autres dettes déjà actées dans les CLAUDE.md
@@ -33,3 +33,7 @@ Contraintes et pistes :
 - **Keepalive SSE périodique** sur les routes IA streamées (protection contre les
   timeouts du proxy pendant les longues générations) — cf.
   `OpenCartableBack/CLAUDE.md`, section « Client IA générique ».
+- **Import : compat archives v1 (manifest français)** maintenue via
+  `normalize_manifest_v1` (`OpenCartableBack/app/course_transfer/schemas.py`) —
+  à retirer un jour si l'on décide de ne plus supporter les exports antérieurs
+  à la nomenclature anglaise.

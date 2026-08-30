@@ -123,7 +123,7 @@ Pour « agencer texte de cours + documents + images », le modèle gagnant est u
 
 ### 5.4 Recherche (J3 — livré)
 - **FTS Postgres** en config **`french_unaccent`** (extension contrib `unaccent` + copie de `french` : stemming ET insensibilité aux accents). Vecteurs `tsvector` **stockés** sur `courses` (titre poids A, description B) et `blocks` (titre B, contenu C — champ par champ, **jamais les corrigés d'exercice**), maintenus par **triggers PostgreSQL**, index **GIN** ; requêtes `websearch_to_tsquery`.
-- **Recherche publique sans compte** (`/api/v1/public/search/courses|teachers` + page front `/:lang/search`) : seuls les cours **publics** remontent ; un prof n'apparaît que s'il a coché l'opt-in `cherchable` de son profil, renseigné un `nom_public` et publié au moins un cours (vecteur prof calculé à la volée : nom + matières enseignées).
+- **Recherche publique sans compte** (`/api/v1/public/search/courses|teachers` + page front `/:lang/search`) : seuls les cours **publics** remontent ; un prof n'apparaît que s'il a coché l'opt-in `searchable` de son profil, renseigné un `public_name` et publié au moins un cours (vecteur prof calculé à la volée : nom + matières enseignées).
 - Facettes : matière (sous-arbre entier via le `code`), niveau (nœud + enfants) — arbres de taxonomie exposés en lecture publique pour les sélecteurs. Pagination `{items, total, limit, offset}`. Recherche sans texte libre = catalogue trié par récence.
 - Évolution : recherche **sémantique** (ChromaDB si actée, cf. 5.7), combinable avec la FTS (recherche hybride).
 
@@ -166,11 +166,11 @@ erDiagram
 
     SUBJECT {
       uuid id
-      string nom
+      string name
     }
     COURSE {
       uuid id
-      string titre
+      string title
       string niveau
       tsvector search_vector
       timestamptz updated_at
@@ -186,8 +186,8 @@ erDiagram
       uuid id
       string type
       string s3_key
-      string nom_original
-      bigint taille
+      string original_name
+      bigint size
       string mime
     }
     MODULE {
