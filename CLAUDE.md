@@ -12,7 +12,7 @@ Trois répertoires, deux applications déployables :
 - **[OpenCartableFront/](OpenCartableFront/)** — SPA Angular 22 (zoneless, SSR + prerender), Transloco (fr/en), OIDC. Voir **[OpenCartableFront/CLAUDE.md](OpenCartableFront/CLAUDE.md)**.
 - **[Assets/](Assets/)** — logos SVG (variantes mono/dark/horizontal) et documents de cadrage de référence (`Descriptions.md`, `DESIGN_SYSTEM.md`).
 
-Chaque sous-projet est autonome (son propre `docker-compose.yml`, `Dockerfile`, `.git`-ignore, tests) et possède un **CLAUDE.md détaillé** : toujours lire celui du sous-projet concerné avant d'y travailler. Ce fichier-ci ne couvre que ce qui traverse les deux.
+Chaque sous-projet est autonome (son propre `docker-compose.yml`, `Dockerfile`, `.git`-ignore, tests) et possède un **CLAUDE.md détaillé** : toujours lire celui du sous-projet concerné avant d'y travailler. Ce fichier-ci ne couvre que ce qui traverse les deux. Les dettes techniques acceptées « à terme » (ex. stratégie de purge des compteurs IA `ai_daily_usage`) sont suivies dans **[TODO.md](TODO.md)** — y ajouter toute nouvelle dette actée.
 
 ## Le contrat entre front et back
 
