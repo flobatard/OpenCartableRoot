@@ -25,6 +25,40 @@ Contraintes et pistes :
   `DELETE FROM ai_daily_usage WHERE day < now() - interval 'N days'` suffit,
   aucune dépendance nouvelle.
 
+## Assistant IA de cours — suites du lot « contexte global »
+
+- **Purge des conversations IA** (`ai_conversations`/`ai_messages`) : aucune
+  purge ni pagination aujourd'hui (limite de liste 100, plafond 300
+  messages/conversation) — croissance sans borne, même stratégie à définir que
+  pour `ai_daily_usage` (le prof peut déjà supprimer manuellement).
+- ⚠ **Taille des réponses d'outils persistées** : chaque tour `tool` stocke le
+  **contenu complet** du résultat dans `ai_messages.content` — jusqu'à
+  **40 000 caractères par lecture de PDF** (`PDF_MAX_CHARS`,
+  `OpenCartableBack/app/course_assistant/tools.py`), rejoué au modèle à chaque
+  reprise de conversation et servi intégralement par le détail. Une
+  conversation qui enchaîne les lectures peut peser plusieurs Mo à elle seule
+  (contrainte Pi : disque + RAM des selects). Pistes à arbitrer : tronquer à la
+  persistance (en gardant un extrait « suffisant pour l'affichage/replay »),
+  compresser, ou purger le `content` des tours tool au-delà d'une ancienneté —
+  à traiter avec la stratégie de purge ci-dessus.
+- **Contextes d'édition (bloc texte, exercice, module) et résolution d'exercice
+  élève** avec leurs flux HITL : lever la garde `globalMode` de `CourseChat`,
+  étendre le `Literal` de `ConversationCreate` (le CHECK en base accepte déjà
+  les 4 contextes persistés). Pour les interrupts HITL inter-requêtes, arbitrer
+  l'introduction d'un **checkpointer LangGraph** (tables hors Alembic, driver
+  psycopg) — non introduit au lot 1, l'état est reconstruit depuis nos tables.
+- **Chat élève anonyme** (reporté — décision utilisateur) : régime public sans
+  JWT à concevoir, avec la question de l'imputation du quota d'un élève sans
+  compte.
+- **Images lues par l'assistant (`read_resource_image`)** : aucun
+  redimensionnement côté back (pas de Pillow — règle « pas de binaire par le
+  backend ») — une image de plus de `IMAGE_MAX_BYTES` (3,5 Mo brut,
+  `OpenCartableBack/app/course_assistant/tools.py`) est refusée au modèle, et
+  une image lourde coûte cher en tokens à chaque lecture. Si les captures
+  volumineuses deviennent courantes : réduire à l'upload côté front (canvas)
+  ou accepter Pillow pour une miniature. L'image n'est **pas rejouée** aux
+  tours suivants (décision actée, le modèle relit au besoin).
+
 ## Autres dettes déjà actées dans les CLAUDE.md
 
 - **Job de réconciliation des orphelins S3** (un échec de purge S3 après commit
