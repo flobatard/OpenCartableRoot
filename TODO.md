@@ -41,12 +41,38 @@ Contraintes et pistes :
   persistance (en gardant un extrait « suffisant pour l'affichage/replay »),
   compresser, ou purger le `content` des tours tool au-delà d'une ancienneté —
   à traiter avec la stratégie de purge ci-dessus.
-- **Contextes d'édition (bloc texte, exercice, module) et résolution d'exercice
-  élève** avec leurs flux HITL : lever la garde `globalMode` de `CourseChat`,
-  étendre le `Literal` de `ConversationCreate` (le CHECK en base accepte déjà
-  les 4 contextes persistés). Pour les interrupts HITL inter-requêtes, arbitrer
-  l'introduction d'un **checkpointer LangGraph** (tables hors Alembic, driver
-  psycopg) — non introduit au lot 1, l'état est reconstruit depuis nos tables.
+- **Contextes d'édition restants (exercice, module) et résolution d'exercice
+  élève** : le contexte **bloc texte (`block_text`) est livré** et fixe le
+  motif à suivre — flux **HITL par interrupt/resume LangGraph, checkpointer
+  `InMemorySaver`** (arbitrage acté, révise le « sans checkpointer » du
+  premier lot) : l'agent propose via un tool sans mutation (proposition dans
+  les args du `tool_call`, persistés), le tool **fige le run**
+  (`agent_interrupt`, `app/core/ai/`), le flux SSE émet `interrupt` et se
+  ferme ; la route `POST .../proposals/{id}/decision` **reprend le run dans un
+  nouveau flux** (`Command(resume=…)`) — le résultat du tool est la décision
+  commentée. Registre des reprises :
+  `OpenCartableBack/app/course_assistant/hitl.py` (TTL 6 h). Côté front,
+  `CourseChat` a trois modes (global/block/placeholder), l'état est extrait en
+  `AssistantChatState` instanciable par hôte (état `awaiting` +
+  `pendingProposal`/`resumeProposal`) et la revue (`app-proposal-review`, diff
+  à la place de l'éditeur) vit chez l'hôte — un nouveau contexte = étendre le
+  `Literal` de `ConversationCreate`, un prompt/tool dédiés, un mode et une
+  revue de plus.
+- ⚠ **Checkpointer HITL InMemory → `AsyncPostgresSaver` au passage
+  multi-nœud** (décision utilisateur) : l'`InMemorySaver` du client IA et le
+  registre `hitl.py` sont **process-locaux** — mono-worker obligatoire (la
+  reprise doit arriver sur le worker qui tient le checkpoint), un redémarrage
+  perd les reprises en attente (le tour partiel persisté reste un round
+  incomplet, replié au replay), et une proposition abandonnée n'est purgée du
+  checkpointer qu'à son TTL (fuite mémoire bornée par l'usage). Le jour du
+  multi-nœud : dépendance `langgraph-checkpoint-postgres` + driver psycopg3,
+  tables créées hors Alembic (`.setup()`), et remplacer le registre in-memory
+  par une table.
+- **Reprise HITL non ré-offerte après un rechargement de page** : la
+  proposition en attente vit dans l'état front (`pendingProposal`) — un
+  reload la perd, alors que le back garde la reprise jusqu'à son TTL. Piste :
+  détecter à l'ouverture d'une conversation un round `propose_block_edit`
+  sans tour `tool` et re-proposer la décision.
 - **Chat élève anonyme** (reporté — décision utilisateur) : régime public sans
   JWT à concevoir, avec la question de l'imputation du quota d'un élève sans
   compte.
@@ -66,7 +92,9 @@ Contraintes et pistes :
   « Nettoyage S3 aux suppressions ».
 - **Keepalive SSE périodique** sur les routes IA streamées (protection contre les
   timeouts du proxy pendant les longues générations) — cf.
-  `OpenCartableBack/CLAUDE.md`, section « Client IA générique ».
+  `OpenCartableBack/CLAUDE.md`, section « Client IA générique ». (Le flux HITL
+  n'aggrave plus le cas : il se **ferme** à la proposition et la décision
+  rouvre un flux — plus d'attente silencieuse sur connexion ouverte.)
 - **Import : compat archives v1 (manifest français)** maintenue via
   `normalize_manifest_v1` (`OpenCartableBack/app/course_transfer/schemas.py`) —
   à retirer un jour si l'on décide de ne plus supporter les exports antérieurs
