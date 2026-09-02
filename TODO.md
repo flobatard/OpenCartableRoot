@@ -41,23 +41,38 @@ Contraintes et pistes :
   persistance (en gardant un extrait « suffisant pour l'affichage/replay »),
   compresser, ou purger le `content` des tours tool au-delà d'une ancienneté —
   à traiter avec la stratégie de purge ci-dessus.
-- **Contextes d'édition restants (exercice, module) et résolution d'exercice
-  élève** : le contexte **bloc texte (`block_text`) est livré** et fixe le
-  motif à suivre — flux **HITL par interrupt/resume LangGraph, checkpointer
-  `InMemorySaver`** (arbitrage acté, révise le « sans checkpointer » du
-  premier lot) : l'agent propose via un tool sans mutation (proposition dans
-  les args du `tool_call`, persistés), le tool **fige le run**
-  (`agent_interrupt`, `app/core/ai/`), le flux SSE émet `interrupt` et se
-  ferme ; la route `POST .../proposals/{id}/decision` **reprend le run dans un
-  nouveau flux** (`Command(resume=…)`) — le résultat du tool est la décision
-  commentée. Registre des reprises :
-  `OpenCartableBack/app/course_assistant/hitl.py` (TTL 6 h). Côté front,
-  `CourseChat` a trois modes (global/block/placeholder), l'état est extrait en
+- **Contexte d'édition restant (module) et résolution d'exercice élève** :
+  les contextes **bloc texte (`block_text`) et exercice (`block_exercise`)
+  sont livrés** et fixent le motif à suivre — flux **HITL par
+  interrupt/resume LangGraph, checkpointer `InMemorySaver`** (arbitrage acté,
+  révise le « sans checkpointer » du premier lot) : l'agent propose via un
+  tool sans mutation (proposition dans les args du `tool_call`, persistés), le
+  tool **fige le run** (`hitl_gate`,
+  `OpenCartableBack/app/course_assistant/editing/base.py` — seul appelant
+  d'`agent_interrupt`), le flux SSE émet `interrupt` et se ferme ; la route
+  `POST .../proposals/{id}/decision` **reprend le run dans un nouveau flux**
+  (`Command(resume=…)`) — le résultat du tool est la décision commentée.
+  Registre des reprises : `OpenCartableBack/app/course_assistant/hitl.py`
+  (TTL 6 h — porte aussi la numérotation `Q…` du tour pour l'exercice,
+  `PendingProposal.question_refs`). Côté back, un contexte d'édition est un
+  **descripteur** `EditContext` (`editing/` : type de bloc attendu, system
+  prompt, tools de proposition — spec, validation, réécriture des args) : un
+  nouveau contexte = un module sous `editing/` + une entrée au registre +
+  étendre le `Literal` de `ConversationCreate`. Côté front, `CourseChat` a
+  trois modes (global/block/placeholder), l'état est extrait en
   `AssistantChatState` instanciable par hôte (état `awaiting` +
-  `pendingProposal`/`resumeProposal`) et la revue (`app-proposal-review`, diff
-  à la place de l'éditeur) vit chez l'hôte — un nouveau contexte = étendre le
-  `Literal` de `ConversationCreate`, un prompt/tool dédiés, un mode et une
-  revue de plus.
+  `pendingProposal`/`resumeProposal`), les propositions sont parsées par tool
+  (`core/course-assistant/proposals.ts`, union `AssistantPendingProposal`) et
+  les revues (diff texte, revue structurée d'exercice — briques
+  `app-proposal-diff`/`app-proposal-decision`) sont orchestrées chez l'hôte
+  par `ProposalHost` — un nouveau contexte = une portée de plus dans
+  `AssistantContext`, un genre de proposition et sa revue.
+- **Propositions d'exercice : Ctrl-Z partiel** — seuls les champs markdown
+  (sujet, énoncé d'une question) sont appliqués via Monaco (annulables) ; le
+  corrigé, l'ajout et la suppression d'une question passent par le formulaire
+  (pas d'undo : le prof rejette, ou redemande). Le **déplacement d'une
+  question par l'IA** n'est pas couvert (aucun tool — le prof réordonne par
+  glisser-déposer).
 - ⚠ **Checkpointer HITL InMemory → `AsyncPostgresSaver` au passage
   multi-nœud** (décision utilisateur) : l'`InMemorySaver` du client IA et le
   registre `hitl.py` sont **process-locaux** — mono-worker obligatoire (la
@@ -71,8 +86,9 @@ Contraintes et pistes :
 - **Reprise HITL non ré-offerte après un rechargement de page** : la
   proposition en attente vit dans l'état front (`pendingProposal`) — un
   reload la perd, alors que le back garde la reprise jusqu'à son TTL. Piste :
-  détecter à l'ouverture d'une conversation un round `propose_block_edit`
-  sans tour `tool` et re-proposer la décision.
+  détecter à l'ouverture d'une conversation un round d'un tool de proposition
+  (`PROPOSAL_TOOLS` — texte ou exercice) sans tour `tool` et re-proposer la
+  décision.
 - **Chat élève anonyme** (reporté — décision utilisateur) : régime public sans
   JWT à concevoir, avec la question de l'imputation du quota d'un élève sans
   compte.
