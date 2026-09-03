@@ -41,13 +41,13 @@ Contraintes et pistes :
   persistance (en gardant un extrait « suffisant pour l'affichage/replay »),
   compresser, ou purger le `content` des tours tool au-delà d'une ancienneté —
   à traiter avec la stratégie de purge ci-dessus.
-- **Contexte d'édition restant (module) et résolution d'exercice élève** :
-  les contextes **bloc texte (`block_text`) et exercice (`block_exercise`)
-  sont livrés** et fixent le motif à suivre — flux **HITL par
-  interrupt/resume LangGraph, checkpointer `InMemorySaver`** (arbitrage acté,
-  révise le « sans checkpointer » du premier lot) : l'agent propose via un
-  tool sans mutation (proposition dans les args du `tool_call`, persistés), le
-  tool **fige le run** (`hitl_gate`,
+- **Résolution d'exercice élève (dernier contexte du cadrage)** : les trois
+  contextes d'édition — **bloc texte (`block_text`), exercice
+  (`block_exercise`) et module (`module`) — sont livrés** et fixent le motif
+  à suivre — flux **HITL par interrupt/resume LangGraph, checkpointer
+  `InMemorySaver`** (arbitrage acté, révise le « sans checkpointer » du
+  premier lot) : l'agent propose via un tool sans mutation (proposition dans
+  les args du `tool_call`, persistés), le tool **fige le run** (`hitl_gate`,
   `OpenCartableBack/app/course_assistant/editing/base.py` — seul appelant
   d'`agent_interrupt`), le flux SSE émet `interrupt` et se ferme ; la route
   `POST .../proposals/{id}/decision` **reprend le run dans un nouveau flux**
@@ -55,24 +55,41 @@ Contraintes et pistes :
   Registre des reprises : `OpenCartableBack/app/course_assistant/hitl.py`
   (TTL 6 h — porte aussi la numérotation `Q…` du tour pour l'exercice,
   `PendingProposal.question_refs`). Côté back, un contexte d'édition est un
-  **descripteur** `EditContext` (`editing/` : type de bloc attendu, system
-  prompt, tools de proposition — spec, validation, réécriture des args) : un
-  nouveau contexte = un module sous `editing/` + une entrée au registre +
-  étendre le `Literal` de `ConversationCreate`. Côté front, `CourseChat` a
-  trois modes (global/block/placeholder), l'état est extrait en
-  `AssistantChatState` instanciable par hôte (état `awaiting` +
-  `pendingProposal`/`resumeProposal`), les propositions sont parsées par tool
+  **descripteur** `EditContext` (`editing/` : cible `target` bloc|module,
+  type de bloc attendu, system prompt, tools de proposition — spec,
+  validation, réécriture des args) : un nouveau contexte = un module sous
+  `editing/` + une entrée au registre + étendre le `Literal` de
+  `ConversationCreate`. Côté front, `CourseChat` a trois modes
+  (global/edit/placeholder), l'état est extrait en `AssistantChatState`
+  instanciable par hôte (état `awaiting` + `pendingProposal`/
+  `resumeProposal`), les propositions sont parsées par tool
   (`core/course-assistant/proposals.ts`, union `AssistantPendingProposal`) et
-  les revues (diff texte, revue structurée d'exercice — briques
-  `app-proposal-diff`/`app-proposal-decision`) sont orchestrées chez l'hôte
-  par `ProposalHost` — un nouveau contexte = une portée de plus dans
-  `AssistantContext`, un genre de proposition et sa revue.
+  les revues (diff texte, revue structurée d'exercice, diff de code d'un
+  module — briques `shared/proposal/`) sont orchestrées chez l'hôte par le
+  `ProposalHost<V>` générique (`core/course-assistant/proposal-host.ts`) — un
+  nouveau contexte = une portée de plus dans `AssistantContext`, un genre de
+  proposition et sa revue. La résolution d'exercice élève est **exemptée de
+  persistance** (décision produit) et relève du régime élève anonyme
+  ci-dessous.
 - **Propositions d'exercice : Ctrl-Z partiel** — seuls les champs markdown
   (sujet, énoncé d'une question) sont appliqués via Monaco (annulables) ; le
   corrigé, l'ajout et la suppression d'une question passent par le formulaire
   (pas d'undo : le prof rejette, ou redemande). Le **déplacement d'une
   question par l'IA** n'est pas couvert (aucun tool — le prof réordonne par
-  glisser-déposer).
+  glisser-déposer). Les propositions de **module**, elles, passent toutes par
+  Monaco (Ctrl-Z complet sur les trois fichiers).
+- **Assistant de module : pas de retour d'exécution** (décision utilisateur,
+  lot module) — l'IA lit le code et propose, le prof juge sur l'aperçu qui
+  exécute le code proposé ; le modèle ne voit ni les erreurs JS ni la console
+  de l'iframe. Piste si le besoin se confirme : le bridge `oc-module:*` de
+  `OpenCartableFront/src/app/shared/module-runner/module-document.ts` capture
+  `window.onerror`/`console.error` et les `postMessage` au parent, l'éditeur
+  les tient et les joint au tour (message système ou tool `read_module_errors`).
+  Touche le code de sécurité du runner et le contrat du bridge — à traiter
+  comme un lot à part. Le prompt `MODULE_RUNTIME`
+  (`OpenCartableBack/app/course_assistant/prompts.py`) est le **miroir** du
+  contrat de `module-document.ts` (CSP, bridge) : toute évolution de l'un
+  doit être reportée dans l'autre.
 - ⚠ **Checkpointer HITL InMemory → `AsyncPostgresSaver` au passage
   multi-nœud** (décision utilisateur) : l'`InMemorySaver` du client IA et le
   registre `hitl.py` sont **process-locaux** — mono-worker obligatoire (la
