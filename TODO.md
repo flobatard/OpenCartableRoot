@@ -108,7 +108,17 @@ Contraintes et pistes :
   décision.
 - **Chat élève anonyme** (reporté — décision utilisateur) : régime public sans
   JWT à concevoir, avec la question de l'imputation du quota d'un élève sans
-  compte.
+  compte. Le front **réserve déjà l'emplacement de correction par question**
+  dans la vue de résolution d'exercice (`ExerciseView`,
+  `OpenCartableFront/src/app/shared/course-blocks-view/`, mode `solve` du bloc
+  seul `blocks/:blockId`) : input `correctionEnabled` (défaut `false` — le
+  bouton « Demander une correction » n'est pas rendu), map `corrections` par
+  id de question (`pending` / `done` + retour markdown / `error`, rien de
+  rendu sans entrée), output `correctionRequested {blockId, questionId,
+  answer}`, relayés par `CourseBlocksView` (types dans
+  `core/student/exercise-correction.ts`). Câblage prévu : `StudentBlock`
+  porte l'état et appelle l'endpoint public à créer (quota à imputer), **sans
+  persistance** (décision produit — rien dans `answer-storage.ts`).
 - **Images lues par l'assistant (`read_resource_image`)** : aucun
   redimensionnement côté back (pas de Pillow — règle « pas de binaire par le
   backend ») — une image de plus de `IMAGE_MAX_BYTES` (3,5 Mo brut,
