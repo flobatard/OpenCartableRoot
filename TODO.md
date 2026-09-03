@@ -68,9 +68,8 @@ Contraintes et pistes :
   module — briques `shared/proposal/`) sont orchestrées chez l'hôte par le
   `ProposalHost<V>` générique (`core/course-assistant/proposal-host.ts`) — un
   nouveau contexte = une portée de plus dans `AssistantContext`, un genre de
-  proposition et sa revue. La résolution d'exercice élève est **exemptée de
-  persistance** (décision produit) et relève du régime élève anonyme
-  ci-dessous.
+  proposition et sa revue. La résolution d'exercice élève est **livrée hors de
+  ce motif** (tuteur d'exercice, cf. section dédiée ci-dessous).
 - **Propositions d'exercice : Ctrl-Z partiel** — seuls les champs markdown
   (sujet, énoncé d'une question) sont appliqués via Monaco (annulables) ; le
   corrigé, l'ajout et la suppression d'une question passent par le formulaire
@@ -106,19 +105,6 @@ Contraintes et pistes :
   détecter à l'ouverture d'une conversation un round d'un tool de proposition
   (`PROPOSAL_TOOLS` — texte ou exercice) sans tour `tool` et re-proposer la
   décision.
-- **Chat élève anonyme** (reporté — décision utilisateur) : régime public sans
-  JWT à concevoir, avec la question de l'imputation du quota d'un élève sans
-  compte. Le front **réserve déjà l'emplacement de correction par question**
-  dans la vue de résolution d'exercice (`ExerciseView`,
-  `OpenCartableFront/src/app/shared/course-blocks-view/`, mode `solve` du bloc
-  seul `blocks/:blockId`) : input `correctionEnabled` (défaut `false` — le
-  bouton « Demander une correction » n'est pas rendu), map `corrections` par
-  id de question (`pending` / `done` + retour markdown / `error`, rien de
-  rendu sans entrée), output `correctionRequested {blockId, questionId,
-  answer}`, relayés par `CourseBlocksView` (types dans
-  `core/student/exercise-correction.ts`). Câblage prévu : `StudentBlock`
-  porte l'état et appelle l'endpoint public à créer (quota à imputer), **sans
-  persistance** (décision produit — rien dans `answer-storage.ts`).
 - **Images lues par l'assistant (`read_resource_image`)** : aucun
   redimensionnement côté back (pas de Pillow — règle « pas de binaire par le
   backend ») — une image de plus de `IMAGE_MAX_BYTES` (3,5 Mo brut,
@@ -127,6 +113,37 @@ Contraintes et pistes :
   volumineuses deviennent courantes : réduire à l'upload côté front (canvas)
   ou accepter Pillow pour une miniature. L'image n'est **pas rejouée** aux
   tours suivants (décision actée, le modèle relit au besoin).
+
+## Tuteur IA d'exercice élève — suites du lot
+
+Le tuteur (`OpenCartableBack/app/student_exercises/`, front `core/student/` +
+`ExerciseView`) est livré pour l'**élève authentifié**, sur **sa** config IA
+(le régime anonyme n'a pas d'IA — décision actée, qui clôt la question de
+l'imputation du quota) ; les tentatives sont persistées par tour dans
+`exercise_submissions` (révise le « sans persistance » du cadrage initial).
+
+- **Purge de `exercise_submissions`** : aucune purge ni pagination (plafond
+  100 tours par question, `MAX_TURNS_PER_QUESTION`) — croissance sans borne,
+  même stratégie à définir que pour `ai_daily_usage` ; un élève ne peut pas
+  effacer ses tentatives serveur (seules ses réponses locales, via « Effacer
+  mes réponses »).
+- **Vue professeur des soumissions** (hors lot) : la table porte tout —
+  `(user_id, course_id, block_id, question_id)`, verdicts, effort — mais
+  aucune route prof ne la lit encore (liste par cours/exercice, progression
+  par élève). À concevoir avec la question de la vie privée des élèves
+  (consentement, anonymisation) avant d'exposer.
+- ⚠ **Injection par l'élève — risque assumé** : le modèle voit le corrigé de
+  la question cible (il doit juger) ; la révélation est **bornée côté serveur**
+  (`guard_reveal` : jamais sans réponse juste ni effort suffisant, corrigé
+  joint par le back seulement si `revealed`) et le prompt ordonne d'ignorer
+  les instructions de l'élève, mais un modèle faible peut paraphraser le
+  corrigé dans son texte. Pistes si le cas se présente : second appel
+  « juge » sans corrigé, ou filtre de similarité entre le retour et le corrigé
+  avant émission.
+- **Fil dévoilé sans reveal progressif** : le texte streamé est concaténé et
+  re-rendu par `app-markdown-view` à chaque token (`[courseId]="null"`, oc-*
+  inertes) — pas le lissage `STREAM_REVEAL_*` du chat prof ; à reprendre si le
+  rendu paraît saccadé.
 
 ## Autres dettes déjà actées dans les CLAUDE.md
 
