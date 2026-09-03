@@ -122,16 +122,18 @@ Le tuteur (`OpenCartableBack/app/student_exercises/`, front `core/student/` +
 l'imputation du quota) ; les tentatives sont persistées par tour dans
 `exercise_submissions` (révise le « sans persistance » du cadrage initial).
 
-- **Purge de `exercise_submissions`** : aucune purge ni pagination (plafond
-  100 tours par question, `MAX_TURNS_PER_QUESTION`) — croissance sans borne,
-  même stratégie à définir que pour `ai_daily_usage` ; un élève ne peut pas
-  effacer ses tentatives serveur (seules ses réponses locales, via « Effacer
-  mes réponses »).
-- **Vue professeur des soumissions** (hors lot) : la table porte tout —
-  `(user_id, course_id, block_id, question_id)`, verdicts, effort — mais
-  aucune route prof ne la lit encore (liste par cours/exercice, progression
-  par élève). À concevoir avec la question de la vie privée des élèves
-  (consentement, anonymisation) avant d'exposer.
+- **Purge de `exercise_submissions`** : aucune purge automatique ni
+  pagination (plafond 100 tours par question, `MAX_TURNS_PER_QUESTION`) —
+  croissance sans borne, même stratégie à définir que pour `ai_daily_usage`.
+  L'effacement **manuel** existe des deux côtés (élève : ses tours, par
+  question ou par bloc ; professeur : ceux de tous les élèves d'un exercice,
+  par question ou par bloc — `DELETE …/submissions`), mais rien de périodique.
+- **Vue professeur des soumissions** (hors lot) : seul un **résumé par
+  question** (compteurs, `GET /courses/{id}/blocks/{id}/submissions/summary`)
+  alimente les boutons d'effacement de l'éditeur d'exercice ; aucune route
+  prof ne lit les contenus (réponses, verdicts, progression par élève). À
+  concevoir avec la question de la vie privée des élèves (consentement,
+  anonymisation) avant d'exposer.
 - ⚠ **Injection par l'élève — risque assumé** : le modèle voit le corrigé de
   la question cible (il doit juger) ; la révélation est **bornée côté serveur**
   (`guard_reveal` : jamais sans réponse juste ni effort suffisant, corrigé
