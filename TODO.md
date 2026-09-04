@@ -3,44 +3,29 @@
 Dettes techniques acceptées « à terme », transverses au monorepo. Chaque entrée
 renvoie vers le code ou le CLAUDE.md concerné ; retirer l'entrée quand c'est livré.
 
-## Stratégie de purge des compteurs de messages IA (`ai_daily_usage`)
+## Purge des données — réglages laissés à l'opérateur
 
-La table back `ai_daily_usage` compte les appels servis par l'**IA par défaut**
-(une ligne par utilisateur actif et par jour UTC —
-`OpenCartableBack/app/models/ai_daily_usage.py`). Aucune purge aujourd'hui :
-le volume est négligeable à court terme, mais la croissance est **sans borne** —
-il faudra mettre en place une stratégie de purge.
+La politique de rétention est **livrée** (`OpenCartableBack/app/maintenance/`,
+service `purge` du compose — cf. le CLAUDE.md du back). Ce qui reste à arbitrer
+n'est plus du code mais des **valeurs** :
 
-Contraintes et pistes :
-
-- **Ne jamais toucher au jour UTC courant** : le quota quotidien
-  (`_consume_default_quota` / `refund_default_quota`,
-  `OpenCartableBack/app/ai_credentials/service.py`) et le compteur
-  « utilisés / autorisés » de l'écran Paramètres → Assistant IA lisent cette ligne.
-- Choisir une **rétention** (ex. 90 jours) : l'historique au-delà ne sert qu'à
-  d'éventuelles statistiques — si des stats long terme sont voulues un jour,
-  agréger avant de supprimer.
-- Véhicule possible : job périodique hors API (cron système sur le Pi —
-  `scripts/` du back est maintenu à la main par l'utilisateur) ; un simple
-  `DELETE FROM ai_daily_usage WHERE day < now() - interval 'N days'` suffit,
-  aucune dépendance nouvelle.
+- **Deux tâches sont câblées mais désactivées par défaut** (`0` = désactivée) :
+  `PURGE_AI_CONVERSATIONS_DAYS` (conversations sans activité — c'est du travail
+  de prof) et `PURGE_EXERCISE_SUBMISSIONS_DAYS` (tentatives d'élèves — données
+  personnelles). Les activer est une décision produit/vie privée, pas une dette
+  technique ; l'effacement manuel existe déjà des deux côtés.
+- **`PURGE_S3_ORPHANS_DRY_RUN` est à `true`** : la réconciliation ne fait que
+  journaliser les orphelins. À basculer après relecture des logs d'une première
+  passe en production.
+- **Pas d'agrégation avant suppression** : l'historique de `ai_daily_usage`
+  au-delà de la rétention est perdu, pas résumé. Si des statistiques long terme
+  sont voulues un jour, agréger avant de purger.
+- Si `PURGE_EXERCISE_SUBMISSIONS_DAYS` est un jour activé à grande échelle, un
+  index sur `exercise_submissions.created_at` seul deviendra utile (l'index
+  existant est `(user_id, block_id, question_id, created_at)`).
 
 ## Assistant IA de cours — suites du lot « contexte global »
 
-- **Purge des conversations IA** (`ai_conversations`/`ai_messages`) : aucune
-  purge ni pagination aujourd'hui (limite de liste 100, plafond 300
-  messages/conversation) — croissance sans borne, même stratégie à définir que
-  pour `ai_daily_usage` (le prof peut déjà supprimer manuellement).
-- ⚠ **Taille des réponses d'outils persistées** : chaque tour `tool` stocke le
-  **contenu complet** du résultat dans `ai_messages.content` — jusqu'à
-  **40 000 caractères par lecture de PDF** (`PDF_MAX_CHARS`,
-  `OpenCartableBack/app/course_assistant/tools.py`), rejoué au modèle à chaque
-  reprise de conversation et servi intégralement par le détail. Une
-  conversation qui enchaîne les lectures peut peser plusieurs Mo à elle seule
-  (contrainte Pi : disque + RAM des selects). Pistes à arbitrer : tronquer à la
-  persistance (en gardant un extrait « suffisant pour l'affichage/replay »),
-  compresser, ou purger le `content` des tours tool au-delà d'une ancienneté —
-  à traiter avec la stratégie de purge ci-dessus.
 - **Résolution d'exercice élève (dernier contexte du cadrage)** : les trois
   contextes d'édition — **bloc texte (`block_text`), exercice
   (`block_exercise`) et module (`module`) — sont livrés** et fixent le motif
@@ -122,12 +107,10 @@ Le tuteur (`OpenCartableBack/app/student_exercises/`, front `core/student/` +
 l'imputation du quota) ; les tentatives sont persistées par tour dans
 `exercise_submissions` (révise le « sans persistance » du cadrage initial).
 
-- **Purge de `exercise_submissions`** : aucune purge automatique ni
-  pagination (plafond 100 tours par question, `MAX_TURNS_PER_QUESTION`) —
-  croissance sans borne, même stratégie à définir que pour `ai_daily_usage`.
-  L'effacement **manuel** existe des deux côtés (élève : ses tours, par
-  question ou par bloc ; professeur : ceux de tous les élèves d'un exercice,
-  par question ou par bloc — `DELETE …/submissions`), mais rien de périodique.
+- **Pas de pagination du fil** (plafond 100 tours par question,
+  `MAX_TURNS_PER_QUESTION`) : le fil complet d'une question est chargé d'un
+  bloc. La purge périodique existe mais est **désactivée par défaut** pour
+  cette table (cf. « Purge des données » plus haut).
 - **Vue professeur des soumissions** (hors lot) : seul un **résumé par
   question** (compteurs, `GET /courses/{id}/blocks/{id}/submissions/summary`)
   alimente les boutons d'effacement de l'éditeur d'exercice ; aucune route
@@ -149,9 +132,6 @@ l'imputation du quota) ; les tentatives sont persistées par tour dans
 
 ## Autres dettes déjà actées dans les CLAUDE.md
 
-- **Job de réconciliation des orphelins S3** (un échec de purge S3 après commit
-  laisse des objets orphelins dans le bucket) — cf. `OpenCartableBack/CLAUDE.md`,
-  « Nettoyage S3 aux suppressions ».
 - **Keepalive SSE périodique** sur les routes IA streamées (protection contre les
   timeouts du proxy pendant les longues générations) — cf.
   `OpenCartableBack/CLAUDE.md`, section « Client IA générique ». (Le flux HITL
