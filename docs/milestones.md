@@ -50,6 +50,11 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 
 - Job hors API (`app/maintenance/`, service compose `purge`) : sept tâches de rétention réglées par `PURGE_*`, garde de schéma contre la course avec les migrations, réconciliation des orphelins S3 (en dry-run par défaut).
 
+## Hors jalon — Consommation de tokens de l'assistant
+
+- Back : l'événement `interrupt` porte l'usage des rounds déjà joués et le segment persisté à l'interruption le conserve (un tour HITL = plusieurs segments dont la somme est le tour) ; `stream_usage` forcé pour la famille OpenAI (`openai` derrière une `base_url`, `openai_compatible`), sans lequel aucun usage n'arrivait en flux.
+- Front : ligne « entrée · sortie » sous chaque tour de l'assistant prof et total de la conversation dans le pied du chat (`core/course-assistant/usage.ts`, sommes par tour et par conversation sur les messages servis par l'API).
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
