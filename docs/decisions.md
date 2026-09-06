@@ -6,6 +6,13 @@ Format : **Titre** · Contexte · Décision · Conséquences · Code.
 
 ---
 
+## 22. Cours d'exemple seedé à l'onboarding, manifeste JSON sans binaire (2026-09-06)
+
+- Contexte : un prof qui termine son onboarding arrive sur un « Mes cours » vide et n'a aucun moyen de découvrir les possibilités d'écriture (formules, diagrammes, figures, schémas, exercices, modules) sans aller lire les pages de doc. Aucun contenu de démo n'existait dans le projet.
+- Décision : la **première** complétion d'un profil de prof dépose automatiquement un cours « Cours d'exemple » en `draft` — visite guidée de ces syntaxes, `preview_settings` personnalisés —, en **best effort** après le commit du profil ; le rattrapage manuel est `POST /courses/starter`, exposé par un bouton de l'état vide de « Mes cours ». Le contenu est un `manifest.json` du format d'échange v2 embarqué dans `app/starter_course/`, **sans aucune ressource binaire** (blocs `text`/`exercise`/`module` seulement).
+- Conséquences : la phase base de données de l'import est extraite en `insert_manifest_course` (`app/course_transfer/importer.py`) et partagée — son ordre des execute reste le contrat unique, rejoué par deux suites de tests ; le seed n'a **aucune** dépendance `Storage` et n'appelle jamais S3 (garde `load_manifest` : un manifeste porteur de ressources est refusé, sinon des lignes `available` pointeraient des objets absents) ; une erreur de seed est journalisée et rollbackée, jamais propagée — l'onboarding reste un 200, et le `logger.warning` est le seul témoin en production ; la FIFO d'`update_profile` s'allonge de trois résultats à la première complétion d'un prof, et son `IndexError` étant avalé par le best-effort, un test dédié garantit que le seed s'exécute vraiment ; le manifeste se régénère par `GET /courses/{id}/export` sur un cours composé dans l'UI plutôt qu'à la main (le LaTeX échappé en JSON est la principale source d'erreur) ; `POST /courses/starter` ne déduplique pas, miroir de l'import.
+- Code : `app/starter_course/` (`manifest.json`, `service.py`, `router.py`), `app/course_transfer/importer.py` (`insert_manifest_course`), `app/users/service.py` (`update_profile`) ; front `CourseService.loadStarterCourse`, `features/courses/course-list/`.
+
 ## 21. Preprod : front et API sur deux origines distinctes (2026-09-06)
 
 - Contexte : la preprod est publiée sur deux vhosts — SPA sur `preprod.opencartable.com`, API sur `api.preprod.opencartable.com` — alors que le contrat par défaut (`apiUrl: '/api'`) supposait une origine unique servie par un seul nginx.

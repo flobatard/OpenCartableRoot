@@ -55,6 +55,11 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 - Back : l'événement `interrupt` porte l'usage des rounds déjà joués et le segment persisté à l'interruption le conserve (un tour HITL = plusieurs segments dont la somme est le tour) ; `stream_usage` forcé pour la famille OpenAI (`openai` derrière une `base_url`, `openai_compatible`), sans lequel aucun usage n'arrivait en flux.
 - Front : ligne « entrée · sortie » sous chaque tour de l'assistant prof et total de la conversation dans le pied du chat (`core/course-assistant/usage.ts`, sommes par tour et par conversation sur les messages servis par l'API).
 
+## Hors jalon — Cours d'exemple à l'onboarding
+
+- Back : `app/starter_course/` — manifeste v2 embarqué sans aucun binaire (neuf blocs : formules, diagrammes, figures, schémas, exercice, module interactif, référence `oc-module:`), seed best-effort à la première complétion d'un profil de prof, route de rattrapage `POST /courses/starter`. La phase base de données de l'import devient `insert_manifest_course`, partagée par les deux chemins.
+- Front : bouton « Charger le cours d'exemple » dans l'état vide de « Mes cours ».
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).

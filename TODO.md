@@ -11,6 +11,8 @@ Dettes techniques acceptées « à terme ». Une ligne par dette, avec le point 
 - **Pas de pagination du fil du tuteur** (plafond `MAX_TURNS_PER_QUESTION` = 100 tours par question, chargés d'un bloc) — `app/student_exercises/`.
 - **Vue professeur des soumissions d'élèves** : seul un résumé par question (compteurs) existe ; aucune route ne lit les contenus. À concevoir avec la question de la vie privée (consentement, anonymisation).
 - **Compat des archives d'export v1** (manifest français) maintenue par `normalize_manifest_v1` — `app/course_transfer/schemas.py` ; à retirer si l'on cesse de supporter ces exports.
+- **Cours d'exemple non idempotent** : chaque `POST /courses/starter` crée un nouveau cours (pas de colonne `is_starter`, et le titre est renommable donc inexploitable comme marqueur) — `app/starter_course/`. À revoir seulement si des doublons remontent.
+- **Manifeste du cours d'exemple vérifié en forme, jamais en rendu** : les tests valident la syntaxe des blocs de code (Mermaid, JSXGraph, TikZ) et l'absence de macro KaTeX, mais rien ne rend réellement le cours — une régression du pipeline de rendu front ne casserait aucun test back — `tests/test_starter_course.py`.
 - **`app/ai/` (routes de smoke-test)** supprimable une fois ses tests de cascade config × quota portés au niveau service dans `tests/test_ai_credentials_api.py`.
 - **Usage IA perdu sur erreur mid-stream** : l'accumulateur de tokens vit dans `_stream_agent` (`app/core/ai/client.py`) et l'exception ne le transporte pas ; `_AssistantTurn.failed` persiste le partiel sans usage (un tour en erreur affiche donc moins que consommé). Pistes : événement d'usage partiel avant `error`, ou accumulateur côté sink.
 
