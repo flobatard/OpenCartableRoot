@@ -6,6 +6,13 @@ Format : **Titre** · Contexte · Décision · Conséquences · Code.
 
 ---
 
+## 21. Preprod : front et API sur deux origines distinctes (2026-09-06)
+
+- Contexte : la preprod est publiée sur deux vhosts — SPA sur `preprod.opencartable.com`, API sur `api.preprod.opencartable.com` — alors que le contrat par défaut (`apiUrl: '/api'`) supposait une origine unique servie par un seul nginx.
+- Décision : `environment.preprod.ts` porte un `apiUrl` **absolu** (`https://api.preprod.opencartable.com/api`) et l'API active son middleware CORS pour l'origine exacte de la SPA (`CORS_ORIGINS` dans `config/preprod.yaml`) ; `allow_credentials` reste `false` — l'auth est un Bearer, aucun cookie.
+- Conséquences : trois surfaces doivent lister l'origine du front — CORS de l'API, redirect/post-logout URIs du client Zitadel, et la **politique CORS du bucket S3** (l'upload est un PUT direct navigateur→S3 sur URL présignée) ; l'`ALLOWED_HOSTS` du SSR reste l'hôte du front seul. Le SSR n'appelle aucune route API (toutes les pages qui consomment l'API sont `RenderMode.Client`), donc l'URL absolue n'a pas de contrepartie serveur.
+- Code : `OpenCartableFront/src/environments/environment.preprod.ts`, `OpenCartableBack/config/preprod.yaml`, `app/main.py` (montage conditionnel du `CORSMiddleware`).
+
 ## 20. Style de lecture = propriété du cours (avant 2026-09)
 
 - Contexte : le prof veut régler typographie et largeur de lecture de ses cours ; ça doit suivre au PDF.
