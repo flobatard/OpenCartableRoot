@@ -15,6 +15,9 @@ Dettes techniques acceptées « à terme ». Une ligne par dette, avec le point 
 - **Manifeste du cours d'exemple vérifié en forme, jamais en rendu** : les tests valident la syntaxe des blocs de code (Mermaid, JSXGraph, TikZ) et l'absence de macro KaTeX, mais rien ne rend réellement le cours — une régression du pipeline de rendu front ne casserait aucun test back — `tests/test_starter_course.py`.
 - **`app/ai/` (routes de smoke-test)** supprimable une fois ses tests de cascade config × quota portés au niveau service dans `tests/test_ai_credentials_api.py`.
 - **Usage IA perdu sur erreur mid-stream** : l'accumulateur de tokens vit dans `_stream_agent` (`app/core/ai/client.py`) et l'exception ne le transporte pas ; `_AssistantTurn.failed` persiste le partiel sans usage (un tour en erreur affiche donc moins que consommé). Pistes : événement d'usage partiel avant `error`, ou accumulateur côté sink.
+- **Tokens d'écriture de cache non distingués** : seuls les tokens *lus* en cache (`input_token_details.cache_read`) sont remontés dans `cached_input_tokens` ; l'écriture (Anthropic, facturée ×1,25) reste confondue avec l'entrée ordinaire — `app/core/ai/messages.py`. À exposer si le coût réel doit être affiché.
+- **Tuteur : deux appels modèle par tour** (protocole `record_verdict` puis rédaction, la garde de révélation en dépend) : le second appel renvoie tout le contexte — bon marché avec un provider à cache, plein tarif sinon — `app/student_exercises/streaming.py`. Piste : verdict en fin de réponse structurée, si la garde serveur peut se contenter d'une vérification a posteriori.
+- **Sommaire sans titres setext** : `markdown_outline` (`app/course_assistant/render.py`) ne détecte que les titres ATX (`#`) ; un bloc écrit avec des soulignés `===`/`---` apparaît sans plan (toujours lisible via `read_block`).
 
 ## Front
 

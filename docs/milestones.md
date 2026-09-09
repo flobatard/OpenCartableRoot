@@ -54,6 +54,8 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 
 - Back : l'événement `interrupt` porte l'usage des rounds déjà joués et le segment persisté à l'interruption le conserve (un tour HITL = plusieurs segments dont la somme est le tour) ; `stream_usage` forcé pour la famille OpenAI (`openai` derrière une `base_url`, `openai_compatible`), sans lequel aucun usage n'arrivait en flux.
 - Front : ligne « entrée · sortie » sous chaque tour de l'assistant prof et total de la conversation dans le pied du chat (`core/course-assistant/usage.ts`, sommes par tour et par conversation sur les messages servis par l'API).
+- Back (2026-09-08) : le cours n'entre plus dans le contexte qu'en **sommaire structuré** (jamais le contenu d'un bloc, cible du tour en entier, lecture à la demande par `read_block`), system prompt statique par contexte et contexte du tour en tête du message utilisateur, replay abrégé à hystérésis, prompts rationalisés (règles partagées assistant/tuteur, protocole HITL énoncé une fois), référence de la question ajoutée donnée au modèle sans relecture ; cache de prompt Anthropic (middleware, system prompt passé au graphe) et `cached_input_tokens` dans l'usage SSE et les colonnes. Sur le cours d'exemple : −40 à −60 % par appel modèle, jusqu'à −80 % sur un gros cours (décision 23).
+- Front (2026-09-08) : « dont N en cache » sur la ligne du tour et le total de la conversation quand le provider relaie des tokens lus en cache.
 
 ## Hors jalon — Cours d'exemple à l'onboarding
 
