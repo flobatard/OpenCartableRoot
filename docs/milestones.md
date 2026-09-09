@@ -62,6 +62,11 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 - Back : `app/starter_course/` — manifeste v2 embarqué sans aucun binaire (neuf blocs : formules, diagrammes, figures, schémas, exercice, module interactif, référence `oc-module:`), seed best-effort à la première complétion d'un profil de prof, route de rattrapage `POST /courses/starter`. La phase base de données de l'import devient `insert_manifest_course`, partagée par les deux chemins.
 - Front : bouton « Charger le cours d'exemple » dans l'état vide de « Mes cours ».
 
+## Hors jalon — Raisonnement et effort des modèles
+
+- Back : préférences `reasoning` (défaut / activé et affiché / coupé) et `reasoning_effort` (niveau natif du provider : jusqu'à minimal…xhigh/max) persistées avec le credential personnel (`users.ai_reasoning`, `ai_reasoning_effort`, migration) et transmises par la cascade `effective_config` à l'assistant et au tuteur ; capacités déclarées par provider (`PROVIDERS_WITH_REASONING_TOGGLE` / `PROVIDER_REASONING_EFFORTS`, 422 hors capacités), catalogue des options par couple (provider, modèle) (`app/core/ai/reasoning.py`, adossé aux profils embarqués de langchain, servi avec le credential et par `POST /users/me/ai-credentials/reasoning-options`) et encodage par provider dans `app/core/ai/providers.py` (Anthropic par paliers du profil embarqué, Gemini par famille, OpenAI `reasoning_effort`, Ollama `think`) ; pour l'IA par défaut, réglages opérateur `AI_REASONING` / `AI_REASONING_EFFORT` (absents = comportement historique) résolus par `resolve_config` avec la même règle de gating (décision 24).
+- Front : deux `<select>` natifs après le champ modèle de Réglages IA (options du catalogue pour le couple saisi, re-sondées au changement de provider et au blur du modèle, enregistrées avec le formulaire) et deux sélecteurs compacts dans le pied du chat qui enregistrent aussitôt par le PUT du credential reconstruit ; formulaire non modifié réaligné sur le signal quand le pied écrit.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
