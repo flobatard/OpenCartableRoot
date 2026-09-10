@@ -72,6 +72,10 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 - Back (2026-09-09) : table `ai_configurations` (plusieurs configurations nommées par utilisateur, clé chiffrée avec un sel par ligne, au plus une active par index partiel unique, aucune active = IA par défaut), migration copiant le credential unique de `users.ai_*` en première configuration active puis supprimant les colonnes ; `/users/me/ai-credentials` devient une collection (enveloppe `configurations` + `active_id`, `POST` crée et active, `PUT /active` bascule, `PUT`/`DELETE /{id}`, sondes avec `config_id`), plafond de 10 ; la cascade `effective_config` lit la configuration active (décision 25).
 - Front : écran Réglages IA en liste de radios-cartes (IA par défaut + une carte par configuration, cocher bascule aussitôt, Modifier/Supprimer par carte) avec éditeur de création/modification (nom après le champ clé), signal `AiCredentialsService` en enveloppe (`create`/`update`/`remove`/`activate`), pied du chat affichant le nom de la configuration active avec un menu rapide de bascule dans l'engrenage (puis « Gérer les configurations… » vers la modale) et un sélecteur de modèle à autocomplétion (modèles du provider listés avec la clé de l'active) qui change le modèle de l'active en place ; les sélecteurs de raisonnement du pied écrivent sur l'active.
 
+## Hors jalon — Mode « Édition auto » des propositions
+
+- Front (2026-09-10) : interrupteur « Édition auto » dans le pied des chats d'édition (bloc texte, exercice, module) ; activé, chaque proposition HITL est appliquée dans l'éditeur et acceptée sans revue (`ProposalModeService`, préférence du navigateur `oc-assistant-proposal-mode` ; `ProposalHost.autoAccept`), sauf la suppression de question, toujours revue ; cible disparue ou envoi en échec = repli sur la revue manuelle. Aucun changement back (décision 27).
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
