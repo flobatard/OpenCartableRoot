@@ -76,6 +76,12 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 
 - Front (2026-09-10) : interrupteur « Édition auto » dans le pied des chats d'édition (bloc texte, exercice, module) ; activé, chaque proposition HITL est appliquée dans l'éditeur et acceptée sans revue (`ProposalModeService`, préférence du navigateur `oc-assistant-proposal-mode` ; `ProposalHost.autoAccept`), sauf la suppression de question, toujours revue ; cible disparue ou envoi en échec = repli sur la revue manuelle. Aucun changement back (décision 27).
 
+## Hors jalon — Langages pluridisciplinaires
+
+Langages du markdown de cours pour les matières autres que les maths, un commit par langage et par dépôt ; chacun apporte sa page de doc, sa section dans l'aide de l'éditeur, sa clause dans le catalogue de l'assistant et son bloc dans le cours d'exemple.
+
+- mhchem (2026-09-10) : notation chimique dans les formules KaTeX — `$\ce{…}$` (équations, ions, états, équilibres) et `$\pu{…}$` (grandeurs et unités) ; extension `katex/contrib/mhchem` chargée avec KaTeX, page de doc intégrée `mhchem`, règle commune `MATH_RULE` de l'assistant (chat global et tuteur compris), bloc « Écrire de la chimie » et garde « jamais hors d'une formule » sur le manifeste.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
