@@ -6,6 +6,13 @@ Format : **Titre** · Contexte · Décision · Conséquences · Code.
 
 ---
 
+## 28. Graphiques Vega-Lite rendus en SVG statique durci (2026-09-11)
+
+- Contexte : les graphiques de données (mesures de TP, climatogrammes, données démographiques) manquaient au markdown de cours. Vega-Lite est une grammaire JSON que les modèles connaissent bien et qui produit du SVG (donc imprimable), mais Vega compile par défaut ses expressions en `new Function`, sait charger des données (`data.url`), des images et suivre des liens : un contenu de cours pourrait faire partir des requêtes du navigateur de chaque élève vers un tiers, et exigerait `'unsafe-eval'` sous une CSP stricte.
+- Décision : fence ```` ```vegalite ```` rendu **statique et hermétique**. La spec est refusée si elle porte une clé `url` à n'importe quel niveau (données en ligne `data.values` seulement, message explicite) ; les expressions passent par `vega-interpreter` (`parse(…, {ast: true})`), jamais par `new Function` ; le loader rejette tout `load` et tout `sanitize` (aucune requête, aucun `href`) ; la vue tourne sans renderer et `toSVG()` produit un SVG texte re-sanitisé par DOMPurify, posé sur la planche claire fixe `--figure-board`. Pas de `vega-embed` (menu d'actions et thèmes inutiles).
+- Conséquences : aucune interactivité (info-bulles, sélections — TODO.md) ; couleurs du thème Vega figées, d'où la planche claire ; ~250 ko gzip de chunks paresseux payés seulement par une page qui affiche un graphique ; les `id` des clips et dégradés du SVG sont rendus uniques à l'impression (`uniquifySvgIds`). Le catalogue de l'assistant (`MARKDOWN_SYNTAXES`) rappelle « jamais d'url » et le manifeste du cours d'exemple est gardé par un test.
+- Code : front `shared/markdown-extensions/vegalite/` (`vegalite-config.ts` garde et largeur, `vegalite-view.ts` rendu), `shared/markdown-editor/course-monaco-lang.ts` (fence coloré en JSON), `shared/print/print-transform.ts` ; back `app/course_assistant/prompts.py`, `tests/test_starter_course.py`.
+
 ## 27. Mode « Édition auto » des propositions HITL, purement front (2026-09-10)
 
 - Contexte : chaque proposition d'édition de l'assistant (bloc texte, exercice, module) fige le run (`interrupt`, décision 10) et attend un clic Accepter / Rejeter dans la revue qui remplace l'éditeur. Sur une série d'éditions demandées d'affilée, ce clic systématique devient une friction ; il fallait un mode où l'assistant édite sans demander, facile à basculer.
