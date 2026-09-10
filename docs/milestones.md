@@ -81,6 +81,7 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 Langages du markdown de cours pour les matières autres que les maths, un commit par langage et par dépôt ; chacun apporte sa page de doc, sa section dans l'aide de l'éditeur, sa clause dans le catalogue de l'assistant et son bloc dans le cours d'exemple.
 
 - mhchem (2026-09-10) : notation chimique dans les formules KaTeX — `$\ce{…}$` (équations, ions, états, équilibres) et `$\pu{…}$` (grandeurs et unités) ; extension `katex/contrib/mhchem` chargée avec KaTeX, page de doc intégrée `mhchem`, règle commune `MATH_RULE` de l'assistant (chat global et tuteur compris), bloc « Écrire de la chimie » et garde « jamais hors d'une formule » sur le manifeste.
+- timeline (2026-09-10) : frise chronologique ```` ```timeline ```` — `period=début,fin,libellé` en bandes sous l'axe, `event=date,libellé` au-dessus (dates `AAAA`, négatives avant J.-C., ou `AAAA-MM-JJ`), `start`/`end`/`step` optionnels ; SVG dessiné par le template sans dépendance (couloirs gloutons contre les chevauchements, largeur calée sur le conteneur, thème sombre natif, imprimable, liste accessible), lignes invalides comptées ; clause du catalogue d'édition, bloc « Construire une frise chronologique » et garde de forme sur le manifeste.
 
 ## Reste du J5
 
