@@ -6,6 +6,13 @@ Format : **Titre** · Contexte · Décision · Conséquences · Code.
 
 ---
 
+## 32. Responsive : deux breakpoints desktop-first en mixins Sass, zéro débordement de page (2026-09-11)
+
+- Contexte : sur téléphone, chaque page défilait horizontalement (574 px de large pour un viewport de 375 px) : header de ~600 px sans repli, barres `.tabs` en `inline-flex`, gouttières empilées (`.app-main` + padding de page) qui faisaient déborder les grilles `minmax(280px, 1fr)`. Aucun système de breakpoint : dix `@media` éparses, 900 et 640 px en dur, aucune prise en compte du tactile. Les élèves lisent leurs cours sur téléphone.
+- Décision : les deux seuils déjà présents de fait deviennent les seuls — `mobile` ≤ 640 px, `stacked` ≤ 900 px (plus `wide`, son complément exact, et `touch` = `hover: none`) —, en mixins d'un partiel `styles/_breakpoints.scss` **sans sortie CSS** (aucun coût sur le budget du bundle initial), résolu depuis les composants par `stylePreprocessorOptions.includePaths` (`@use 'breakpoints' as bp;`). Desktop-first : les composants existants gardent leur rendu et reçoivent des surcharges. Les requêtes de largeur visent `screen` (l'impression garde le desktop). Pas de filet `overflow-x: clip` sur `body` : il masquerait les régressions et rendrait du contenu inatteignable — on corrige les causes. Header : burger (disclosure, un seul markup basculé en CSS) plutôt qu'un header d'icônes. Côté prof, cible « utilisable » (pas de débordement, empilements), pas une édition optimisée au doigt.
+- Conséquences : toute nouvelle requête de largeur passe par les mixins ; les règles de composition (gouttière unique, grilles `minmax(min(…, 100%), 1fr)`, rangées d'actions qui passent à la ligne, champs ≥ 16 px, cibles ≥ 40 px, rien au seul survol) sont au §12 du design system. Modifier `angular.json` exige de redémarrer `ng serve`.
+- Code : front `src/styles/_breakpoints.scss`, `angular.json`, `src/app/app.scss`, `layout/header/`, `shared/tabs/active-tab-in-view.directive.ts`, `styles/_components.scss` (`.tabs`), `DESIGN_SYSTEM.md` §12.
+
 ## 31. Encadrés pédagogiques en syntaxe d'alerte GitHub, dans le pipeline markdown (2026-09-11)
 
 - Contexte : les supports de cours de toutes les matières mettent en valeur définitions, méthodes, points à retenir et mises en garde. Un fence ne convient pas — son contenu est du texte brut, alors qu'un encadré contient formules, listes et figures — et un type de bloc dédié casserait le fil du texte (décision de §5.3 : le markdown couvre les encadrés).
