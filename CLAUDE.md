@@ -39,7 +39,7 @@ L'API et la SPA sont couplées par des invariants transverses ; les casser d'un 
 
 5. **Le contrat SSE** des routes IA (`token`/`thinking`/`tool_call`/`tool_result`/`interrupt`/`done`/`error`, POST + `fetch`/`ReadableStream` côté front, Bearer posé à la main) est défini côté back par la docstring de `app/core/sse.py` (boucle d'encodage des tours dans `app/course_assistant/turn_encoder.py`) et consommé côté front par `postSseStream`/`createSseParser` de `core/course-assistant/sse.ts` — seul endroit du front qui pose le Bearer à la main. Le contrat est **additif** : le front tolère les événements inconnus.
 
-6. **Deux miroirs à maintenir ensemble** : le prompt `MODULE_RUNTIME` du back décrit le bac à sable réel de `shared/module-runner/module-document.ts` (CSP, bridge) ; les plafonds partagés (taille d'export, extrait des résultats d'outils, clés camelCase de `preview_settings`) sont recopiés en constantes des deux côtés.
+6. **Deux miroirs à maintenir ensemble** : le prompt `MODULE_RUNTIME` du back décrit le bac à sable réel de `shared/module-runner/module-document.ts` (CSP, bridge) et le catalogue des librairies préinstallées (`MODULE_LIBRARY_NAMES` ↔ `MODULE_LIBRARIES` de `module-libraries.ts` : noms du pragma `@oc-libs`, globaux, versions majeures) ; les plafonds partagés (taille d'export, extrait des résultats d'outils, clés camelCase de `preview_settings`) sont recopiés en constantes des deux côtés.
 
 ## Règles transverses
 
