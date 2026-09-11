@@ -60,7 +60,7 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 ## Hors jalon — Cours d'exemple à l'onboarding
 
 - Back : `app/starter_course/` — manifeste v2 embarqué sans aucun binaire (neuf blocs : formules, diagrammes, figures, schémas, exercice, module interactif, référence `oc-module:`), seed best-effort à la première complétion d'un profil de prof, route de rattrapage `POST /courses/starter`. La phase base de données de l'import devient `insert_manifest_course`, partagée par les deux chemins.
-- Front : bouton « Charger le cours d'exemple » dans l'état vide de « Mes cours ».
+- Front : bouton « Charger le cours d'exemple » dans l'état vide de « Mes cours », et en entrée discrète (bouton ghost) sous une liste non vide.
 
 ## Hors jalon — Raisonnement et effort des modèles
 
