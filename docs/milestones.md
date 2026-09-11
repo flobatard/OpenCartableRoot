@@ -95,6 +95,18 @@ Langages du markdown de cours pour les matières autres que les maths, un commit
 
 - Front et back (2026-09-11) : six librairies préinstallées dans le bac à sable des modules — Matter.js, Chart.js, p5.js 2.x, JSXGraph, D3, Three.js — déclarées par le pragma `// @oc-libs: …` en tête du JS et inlinées par le runtime sans rouvrir la CSP (décision 30) ; fichiers préparés au postinstall (`scripts/prepare-module-libs.mjs`, Three bundlé en IIFE), lus une fois par session et servis `no-cache` ; note sous l'iframe si une lecture échoue, aide de l'onglet JS de l'éditeur (pragma, noms disponibles, noms inconnus signalés) ; puce « Bibliothèques » et pièges de l'auto-resize dans `MODULE_RUNTIME`. Cours d'exemple : bloc « Des bibliothèques dans les modules » et six modules (chute et rebonds, proies et prédateurs, diffusion à travers une membrane, nombre dérivé et tangente, arbre de parenté des vertébrés, géométrie des molécules), désormais vingt-quatre blocs ; tests de pragma, d'usage et de couverture du catalogue.
 
+## Hors jalon — Expérience mobile
+
+Front (2026-09-12), cinq lots (décision 32) : le site défilait horizontalement sur toutes ses pages (574 px de contenu pour un viewport de 375 px).
+
+- Fondations : partiel `styles/_breakpoints.scss` (mixins `mobile` ≤ 640, `stacked` ≤ 900, `wide`, `touch`, sans sortie CSS, résolu par `includePaths`) et §12 du design system ; header à symbole + burger (disclosure, nav et préférences dans un seul markup basculé en CSS) ; une seule gouttière (`.app-main`) sur téléphone, les pages retirent leur padding latéral ; `.tabs` défilant avec l'onglet actif ramené en vue (`ocActiveTabInView`) ; bandeau de consentement empilé, pied de page en colonne, `100svh`, `text-size-adjust`.
+- Pages élèves et contenu de cours : tableaux GFM enveloppés dans `div.course-table` défilant (override du renderer `table`), mots longs et URL qui passent à la ligne, citation simple à filet, listes resserrées ; boutons imprimer / style de lecture visibles et dans le flux au tactile ; lecture en haut de page à l'arrivée sur un bloc, navigation Précédent/Suivant en deux lignes ; retraits de l'exercice et du tuteur resserrés, champs à 16 px minimum (zoom iOS) ; carte document qui passe à la ligne, repli du PDF inline sans visionneuse intégrée (Chrome Android) ; module interactif agrandissable en calque plein écran ; JSXGraph en 16:9 qui laisse défiler la page à un doigt, GeoGebra au ratio de sa config, TikZ/Vega en `safe center`.
+- Recherche et documentation : grilles à minimum borné, facettes repliées par défaut sous 900 px, pagination en deux lignes, playground en `minmax(0, 1fr)`.
+- Pages prof (cible « utilisable ») : rangées d'actions des listes sur leur propre ligne (l'état « Confirmer … » débordait), cibles tactiles (flèches, poignées, chevrons), éditeurs de bloc et de module en **bascule de vue** Éditeur ⇄ Assistant plutôt qu'en empilement, hauteurs en `dvh`.
+- Assistant et notifications : `pointer-events: none` sur l'hôte du panneau flottant (sa bande transparente avalait les taps du bas de l'écran), panneau effacé sur les pages d'éditeur sous 900 px, `interactive-widget=resizes-content` (clavier virtuel), pied du chat à 36 px au tactile, légendes de diff masquées quand Monaco passe en vue inline, snackbar au-dessus de la pastille.
+
+Vérifié en Chromium headless (émulation mobile 360 / 375 / 414 px, thèmes clair et sombre) sur la home, la recherche, la documentation, les pages élèves et l'espace prof : `scrollWidth === clientWidth` partout, desktop inchangé à 1280 px.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
