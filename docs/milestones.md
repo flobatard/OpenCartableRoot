@@ -107,6 +107,15 @@ Front (2026-09-12), cinq lots (décision 32) : le site défilait horizontalement
 
 Vérifié en Chromium headless (émulation mobile 360 / 375 / 414 px, thèmes clair et sombre) sur la home, la recherche, la documentation, les pages élèves et l'espace prof : `scrollWidth === clientWidth` partout, desktop inchangé à 1280 px.
 
+## Hors jalon — Export HTML autonome
+
+Front (2026-09-12), décision 33 : second format d'export à côté du PDF, pour ce que le papier perd — les modules interactifs.
+
+- `shared/export-html/` clone le DOM rendu comme `PrintService`, puis sérialise : chrome morte retirée (miroir des blocs `@media print`), liens relatifs absolutisés (le fichier s'ouvre en `file://`), médias et PDF embarqués remplacés par une note vers l'URL front stable, images de la bibliothèque intégrées en `data:` sous un budget de 25 Mio, CSS pris sur le **CSSOM vivant** (`@media print` de l'app retiré, polices d'interface abandonnées au profit des piles système, polices KaTeX embarquées seulement si le contenu porte des formules).
+- **Modules vivants** : chaque hôte `data-oc-module-id` devient une iframe `srcdoc` composée par `composeModuleDocument` (CSP `default-src 'none'` inchangée, librairies `@oc-libs` inlinées), plus un script de dix lignes dans la page exportée qui applique les messages `oc-module:resize`. `composeModule` est extrait de `ModuleRunner` et partagé par le bac à sable, l'export et l'éditeur.
+- UI : modale « Exporter » commune aux deux formats (`shared/export-dialog/`), branchée sur l'aperçu prof, la page « Cours entier » de l'élève et le bouton flottant de chaque bloc (monté à la demande) ; « Télécharger en HTML » dans l'éditeur de module, sur le code courant des trois Monaco.
+- Vérifié en vrai navigateur, fichier ouvert en `file://` **DNS coupé** : maths, Mermaid, encadré et tableau rendus, `Chart` chargé et canvas peint dans l'iframe, hauteur ajustée par le pont, zéro requête réseau, aucun débordement à 375 px, page toujours imprimable. Poids : 652 ko pour deux blocs avec formules et un module Chart.js (338 ko de polices KaTeX, 226 ko de librairie).
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
