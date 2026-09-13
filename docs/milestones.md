@@ -116,6 +116,13 @@ Front (2026-09-12), décision 33 : second format d'export à côté du PDF, pour
 - UI : modale « Exporter » commune aux deux formats (`shared/export-dialog/`), branchée sur l'aperçu prof, la page « Cours entier » de l'élève et le bouton flottant de chaque bloc (monté à la demande) ; « Télécharger en HTML » dans l'éditeur de module, sur le code courant des trois Monaco.
 - Vérifié en vrai navigateur, fichier ouvert en `file://` **DNS coupé** : maths, Mermaid, encadré et tableau rendus, `Chart` chargé et canvas peint dans l'iframe, hauteur ajustée par le pont, zéro requête réseau, aucun débordement à 375 px, page toujours imprimable. Poids : 652 ko pour deux blocs avec formules et un module Chart.js (338 ko de polices KaTeX, 226 ko de librairie).
 
+## Hors jalon — Questions de l'assistant
+
+Back et front (2026-09-13), décision 34 : l'assistant pose ses questions au professeur au lieu de deviner.
+
+- Back : tool bloquant `ask_questions` dans les quatre contextes (1 à 4 questions à choix unique ou multiple, suggestions validées, « Autre » ajouté par l'interface), route de réponse `…/questions/{tool_call_id}/answer` contrôlée contre la forme attendue avant consommation (422 réessayable, 404 si rien n'attend), genre `kind` sur l'interrupt et le registre ; tout tour d'assistant checkpointé avec `durability="exit"`, threads purgés à l'abandon du flux, à la suppression d'une conversation et à l'expiration ; garde « un seul outil bloquant par réponse » dans le graphe agent (appels parallèles écartés, reprise toujours possible) ; replay qui replie les rounds incomplets et garde les réponses entières ; règle de prompt `QUESTIONS_RULE`.
+- Front : formulaire en étapes à la place du composer (cartes de choix radio ou cases, « Autre » coché à la saisie, Précédent / Suivant / Répondre, croix du refus), carte de la série dans le fil (en attente, réponses, ou sans réponse), chat ou panneau replié déplié à l'arrivée d'une série, questions reproposées à la réouverture d'une conversation (notice si elles ont expiré), mesure en compteurs et formulaire masqué des replays.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
