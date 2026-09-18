@@ -41,6 +41,8 @@ L'API et la SPA sont couplées par des invariants transverses ; les casser d'un 
 
 6. **Deux miroirs à maintenir ensemble** : le prompt `MODULE_RUNTIME` du back décrit le bac à sable réel de `shared/module-runner/module-document.ts` (CSP, bridge) et le catalogue des librairies préinstallées (`MODULE_LIBRARY_NAMES` ↔ `MODULE_LIBRARIES` de `module-libraries.ts` : noms du pragma `@oc-libs`, globaux, versions majeures) ; les plafonds partagés (taille d'export, extrait des résultats d'outils, réponse libre aux questions de l'assistant `MAX_QUESTION_OTHER_CHARS`, clés camelCase de `preview_settings`) sont recopiés en constantes des deux côtés.
 
+7. **Rôle de plateforme et backoffice** : `GET /api/v1/users/me` expose `platform_role` (`public` | `super_admin`), qu'aucune route n'écrit (CLI `python -m app.users.roles` côté back). Le front ne fait que **masquer** (entrée « Administration » du menu utilisateur, `superAdminGuard` fail-closed) ; le back **refuse** en 403 sur `/api/v1/admin/*`. Les jobs de maintenance y sont désignés par leur nom anglais du registre back (`app/maintenance/registry.py`), traduit côté front par `admin.jobs.names.<nom>` — un job inconnu du front s'affiche sous son nom brut.
+
 ## Règles transverses
 
 - Toute nouvelle décision d'architecture → une entrée en tête de [docs/decisions.md](docs/decisions.md), et `Descriptions.md` mis à jour si l'architecture cible change.
