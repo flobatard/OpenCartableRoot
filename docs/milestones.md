@@ -50,6 +50,15 @@ Récit court de ce qui a été construit, jalon par jalon, avec l'endroit où ç
 
 - Job hors API (`app/maintenance/`, service compose `purge`) : sept tâches de rétention réglées par `PURGE_*`, garde de schéma contre la course avec les migrations, réconciliation des orphelins S3 (en dry-run par défaut).
 
+## Hors jalon — Scheduler de maintenance
+
+Back (2026-09-18), décision 37 : la boucle shell de purge devient un scheduler résident.
+
+- Service compose `scheduler` (ex-`purge`) : `AsyncIOScheduler` in-process, **une expression cron par job** dans `config/*.yaml` (`PURGE_INTERVAL_SECONDS` supprimé) — purges légères quotidiennes vers 03 h, l'`UPDATE` des tours d'outil et le balayage du bucket répartis sur deux nuits de week-end distinctes. Arrêt propre sur SIGTERM (handler explicite, passe en cours tenue derrière un `shield` puis drainée, `engine.dispose()`).
+- Registre unique des neuf jobs (noms anglais, libellés français pour les logs), runner partagé par le scheduler et le one-shot `python -m app.maintenance [job…]`, garde de schéma Alembic rejouée **avant chaque job** (statut `skipped`, sans jamais attendre).
+- Table `maintenance_job_state` : une ligne par job, upsertée à chaque passe sur une session dédiée (statut, compte, durée, erreur tronquée et expurgée, échecs consécutifs, total, détail JSONB).
+- Deux contrôles en **lecture seule** : `storage_inventory` (lignes par table, octets sur disque, objets et octets par préfixe S3) et `missing_s3_objects` (lignes `available` pointant un objet S3 absent — HEAD à concurrence bornée, plafond par passe, curseur tournant).
+
 ## Hors jalon — Consommation de tokens de l'assistant
 
 - Back : l'événement `interrupt` porte l'usage des rounds déjà joués et le segment persisté à l'interruption le conserve (un tour HITL = plusieurs segments dont la somme est le tour) ; `stream_usage` forcé pour la famille OpenAI (`openai` derrière une `base_url`, `openai_compatible`), sans lequel aucun usage n'arrivait en flux.
