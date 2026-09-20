@@ -149,6 +149,15 @@ Back et front (2026-09-18), décision 39 : un rôle de plateforme ouvre un backo
 
 Vérifié en navigateur headless sur fausse API : redirection de `/fr/admin` vers `/fr/admin/jobs`, compte `public` renvoyé à l'accueil, lancement en deux temps et demande affichée, thèmes clair et sombre, aucun débordement à 375 px.
 
+## Hors jalon — Structure du cours par l'assistant
+
+Back et front (2026-09-20), décision 40 : en édition globale, l'assistant du cours propose d'ajouter, de supprimer ou de réordonner des blocs, le professeur validant chaque opération dans la fenêtre de revue globale.
+
+- Back : tools bloquants `propose_block_add` (méta seule : le bloc est créé vide, puis rempli par `edit_block`), `propose_block_delete` et `propose_blocks_reorder` (ordre complet) du contexte `course` à `allow_edit` — propositions de genre `proposal` de l'assistant global lui-même, args réécrits (ids résolus), reprise par la route de décision autorisée hors contexte d'édition par `allow_edit` ; références `B…` positionnelles renumérotées à la reprise, nouveau sommaire et référence du bloc créé dans le résultat du tool (`block_refs` capturés à l'interrupt), validations idempotentes ; règle de prompt `STRUCTURE_RULE`.
+- Front : trois genres de proposition sans délégation, revue `app-structure-proposal-review` dans la fenêtre globale (ajout, suppression avec avertissement, ordre proposé et blocs déplacés), application headless par `CourseService` (création puis ressource ou module pointé puis position ; suppression refusée tant que l'éditeur du bloc est monté ; ordre exact exigé), carte du fil « Revoir », suppression toujours revue en mode « Édition auto ».
+
+Vérifié en navigateur headless sur fausse API et faux flux SSE : proposition de réordonnancement revue, `PUT /blocks/order` avant la décision, page cours réordonnée, aucun débordement.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
