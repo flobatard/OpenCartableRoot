@@ -158,6 +158,15 @@ Back et front (2026-09-20), décision 40 : en édition globale, l'assistant du c
 
 Vérifié en navigateur headless sur fausse API et faux flux SSE : proposition de réordonnancement revue, `PUT /blocks/order` avant la décision, page cours réordonnée, aucun débordement.
 
+## Hors jalon — Pièces jointes des chats de l'assistant
+
+Back et front (2026-09-24), décision 42 : le professeur joint des fichiers à ses messages, dans le chat global comme dans les chats d'édition. Le tuteur d'exercice de l'élève reste hors périmètre.
+
+- Socle : table `ai_attachments` (métadonnées seules, binaire sur S3 sous `courses/<id>/assistant/…`), flow presigné en trois temps sur le gabarit **strict de l'avatar** — whitelist de mimes fermée, plafond par famille, confirmation qui re-vérifie taille **et** type au HEAD et purge l'objet hors gabarit. Ménage complet livré avec la table : troisième anti-jointure de `reconcile_s3_orphans` (sans elle, toute pièce jointe serait supprimée comme orpheline), dixième job `ai_attachments` (rétention 7 jours), purge S3 des cascades (conversation, cours, purge des conversations).
+- Le tour : références courtes `A…` (stables à vie dans une conversation), section « Pièces jointes » en fin de contexte du tour, tool `read_attachment` qui dispatche sur la famille — image montrée au modèle, PDF, texte et bureautique extraits —, règle de prompt `ATTACHMENTS_RULE`, rechargement obligatoire à la reprise HITL (mêmes tools qu'à l'aller) et propagation aux sous-assistants d'édition. Contrat SSE **inchangé**.
+- Bureautique : `python-docx`, `python-pptx`, `odfpy` (docx, pptx, odt, odp), avec garde de taille décompressée et refus de `DOCTYPE` posés en amont des libs. Extraction dégradée, annoncée comme telle au modèle.
+- Front : service d'upload décalqué de `ResourceService`, brouillons de pièces jointes dans `AssistantChatState`, sous-composant `app-course-chat-attachments` (bouton trombone, puces, progression, retrait ; puces figées et cliquables sous la bulle du professeur), glisser-déposer et collage d'une capture, réduction d'image par canvas avant l'envoi, mime déduit de l'extension quand le navigateur ne type pas le fichier.
+
 ## Reste du J5
 
 Vue professeur des soumissions d'élèves et RAG éventuel — voir [../TODO.md](../TODO.md).
